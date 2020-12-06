@@ -23,7 +23,7 @@ const petitionSchema = new mongoose.Schema({
      * @mark Filing relation
      */
     // User who created the petition
-    user: {
+    creator: {
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true

@@ -3,7 +3,7 @@
  **/
 
 const mongoose = require('mongoose');
-const config = require('./config');
+const config = require('../config');
 
 // Use new create index
 mongoose.set('useCreateIndex', true);
@@ -29,5 +29,6 @@ require('./models/target');
 require('./models/user');
 require('./models/authenticator');
 require('./models/role');
+require('./models/roleholder');
 
 module.exports = mongoose;

@@ -29,6 +29,18 @@ const userSchema = new mongoose.Schema({
     },
 
     /**
+     * Profile
+     */
+    name: {
+        type: String,
+        required: true
+    },
+    thumbnail: {
+        type: String,
+        default: null
+    },
+
+    /**
      * Authenticator
      */
     // Whatever form of authentication the user uses to sign in.
@@ -37,17 +49,6 @@ const userSchema = new mongoose.Schema({
         ref: 'Authenticator',
         required: true
     },
-
-    /**
-     * Details
-     */
-    // What roles the user has. This can have roles from multiple different governments.
-    roles: [{
-        type: mongoose.Types.ObjectId,
-        ref: 'Role',
-        required: true,
-        default: []
-    }],
 
     /**
      * Metadata

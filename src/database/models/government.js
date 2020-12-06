@@ -25,7 +25,7 @@ const governmentSchema = new mongoose.Schema({
      * @mark Relationships
      */
     // Administrative user who created this government
-    user: {
+    creator: {
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true

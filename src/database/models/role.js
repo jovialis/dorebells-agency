@@ -25,7 +25,7 @@ const roleSchema = new mongoose.Schema({
      * @mark Relations
      */
     // Represents the administrative user who created this Target
-    user: {
+    creator: {
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
