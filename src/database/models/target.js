@@ -50,7 +50,7 @@ const targetSchema = new mongoose.Schema({
      * @mark Metadata
      */
     // Timestamp of the target's creation
-    timestamp: {
+    createdOn: {
         type: Date,
         default: Date.now
     }

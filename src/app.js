@@ -35,6 +35,7 @@ const resolvers = schemas.resolvers;
 // API Data sources
 const GovernmentAPI = require('./datasources/GovernmentAPI');
 const UserAPI = require('./datasources/UserAPI');
+const PetitionAPI = require('./datasources/PetitionAPI');
 
 // Create and apply ApolloServer
 const server = new ApolloServer({
@@ -43,7 +44,8 @@ const server = new ApolloServer({
     dataSources: () => {
         return {
             governmentAPI: new GovernmentAPI(),
-            userAPI: new UserAPI()
+            userAPI: new UserAPI(),
+            petitionAPI: new PetitionAPI()
         };
     },
     context: ({req}) => ({

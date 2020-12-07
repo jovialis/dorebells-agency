@@ -12,16 +12,40 @@ const schema = `
     type User {
         uid: ID!
         name: String!
+        thumbnail: String!
         email: String!
-        roles(government: ID!): [Role]!
+        lastLogin: Date!
+        firstLogin: Date!
+        roles(government: ID): [Role]!
+        permissions(government: ID): [String]!
+        authenticator: String
+    }
+    
+    type Role {
+        uid: ID!
+        government: Government!
+        name: String!
+        permissions: [String]!
+        createdOn: Date!
     }
 `;
 
 const resolver = {
     User: {
         async roles(parent, {government: governmentUID}, { dataSources }) {
-            return dataSources.userAPI.getRoles(parent.uid, governmentUID);
+            return await dataSources.userAPI.getRoles(parent.uid, governmentUID);
+        },
+        async permissions(parent, {government: governmentUID}, {dataSources}) {
+            return await dataSources.userAPI.getPermissions(parent.uid, governmentUID);
+        },
+        async authenticator(parent, _args, {dataSources}) {
+            return await dataSources.userAPI.getAuthenticator(parent.uid);
         }
+    },
+    Role: {
+        async government(parent, _args, {dataSources}) {
+            return await dataSources.userAPI.getRoleGovernment(parent.uid);
+        },
     }
 };
 

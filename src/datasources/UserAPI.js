@@ -37,12 +37,58 @@ class UserAPI extends DataSource {
      * Returns a list of Roles for a given user and a given Government.
      * @param userUID
      * @param governmentUID
+     * @param options
      * @returns {Promise<[Role]>}
      */
     async getRoles(userUID, governmentUID) {
         return this.controller.getUserRolesByUIDAndGovernmentUID(userUID, governmentUID);
     }
 
+    /**
+     * Returns a flat list of all the user's permissions.
+     * @param userUID User UID
+     * @param governmentUID Optional Government UID.
+     * @returns {Promise<[String]>}
+     */
+    async getPermissions(userUID, governmentUID) {
+        const roles = await this.controller.getUserRolesByUIDAndGovernmentUID(userUID, governmentUID, {
+            select: 'permissions'
+        });
+        return roles.reduce((r, v) => {
+            r.push(...v.permissions);
+            return r;
+        }, []);
+    }
+
+    /**
+     * Returns the Authenticator type used by the user.
+     * @param userUID UID of the user.
+     * @returns {Promise<String>}
+     */
+    async getAuthenticator(userUID) {
+        const user = await this.controller.getUserByUID(userUID, {
+            select: 'authenticator',
+            populate: [{
+                path: 'authenticator',
+                select: 'authenticatorType'
+            }]
+        });
+        return user.authenticator.authenticatorType;
+    }
+
+    /**
+     * Returns the Government for a given role
+     * @param roleUID UID of the role.
+     * @returns {Promise<Government>}
+     */
+    async getRoleGovernment(roleUID) {
+        const role = await this.controller.getRoleByUID(roleUID, {
+            select: 'government',
+            populate: 'government'
+        });
+        return role.government;
+    }
+
 }
 
-module.exports = GovernmentAPI;
+module.exports = UserAPI;

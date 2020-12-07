@@ -51,12 +51,11 @@ const roleSchema = new mongoose.Schema({
         enum: ['EDIT_ME']
     }],
 
-
     /**
      * @mark Metadata
      */
     // Timestamp of the target's creation
-    timestamp: {
+    createdOn: {
         type: Date,
         default: Date.now
     }

@@ -37,7 +37,8 @@ const authenticatorSchema = new mongoose.Schema({
         required: true
     }
 }, {
-    collection: 'authenticators'
+    collection: 'authenticators',
+    discriminatorKey: 'authenticatorType'
 });
 
 const Authenticator = mongoose.model('Authenticator', authenticatorSchema);

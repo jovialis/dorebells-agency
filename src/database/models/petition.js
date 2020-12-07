@@ -63,7 +63,7 @@ const petitionSchema = new mongoose.Schema({
     /**
      * @mark Metadata
      */
-    timestamp: {
+    createdOn: {
         type: Date,
         default: Date.now,
         required: true

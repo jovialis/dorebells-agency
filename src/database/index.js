@@ -30,5 +30,6 @@ require('./models/user');
 require('./models/authenticator');
 require('./models/role');
 require('./models/roleholder');
+require('./models/signature');
 
 module.exports = mongoose;

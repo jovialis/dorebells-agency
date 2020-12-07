@@ -16,7 +16,9 @@ module.exports = {
     getUserRolesByUIDAndGovernmentUID,
 
     getRolesByGovernment,
-    getRoleHoldingUsersByGovernment
+    getRoleHoldingUsersByGovernment,
+
+    getRoleByUID
 };
 
 /**
@@ -40,7 +42,7 @@ async function getUserByUID(uid, options = DefaultQueryOptions) {
  * @param userUID
  * @param governmentUID
  * @param options
- * @returns {Promise<void>}
+ * @returns {Promise<Role[]>}
  */
 async function getUserRolesByUIDAndGovernmentUID(userUID, governmentUID, options = DefaultQueryOptions) {
     // Fetch user
@@ -136,4 +138,19 @@ async function getRoleHoldingUsersByGovernment(government, options = DefaultQuer
         }
         return r;
     });
+}
+
+/**
+ * Fetches a Role by its UID.
+ * @param uid Role UID
+ * @param options
+ * @returns {Promise<Role>}
+ */
+async function getRoleByUID(uid, options = DefaultQueryOptions) {
+    const role = await optionsQuery(Role.findOne({uid}), options);
+    if (!role) {
+        throw createError(404, "Role could not be found by that UID.");
+    }
+
+    return role;
 }

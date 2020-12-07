@@ -16,6 +16,7 @@ const schema = `
         creator: User!
         petitions: [Petition]!
         members: [User]!
+        current: Boolean!
     }
 `;
 

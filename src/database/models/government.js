@@ -48,6 +48,11 @@ const governmentSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now
+    },
+    // Whether or not this is the current government
+    current: {
+        type: Boolean,
+        default: false
     }
 }, {
     collection: 'governments'

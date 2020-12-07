@@ -10,8 +10,8 @@ const sessions = require('./handlers/sessions');
 
 // Use all required routes
 router.use([
-    auth,
-    sessions
+    sessions,
+    auth
 ]);
 
 module.exports = router;

@@ -12,12 +12,13 @@ const {optionsQuery, DefaultQueryOptions} = require('../utils/queryOptionsWrappe
 module.exports = {
     getGovernmentByUID,
     getPetitionsByGovernmentUID,
-    getMembersByGovernmentUID
+    getMembersByGovernmentUID,
+    getCurrentGovernment
 };
 
 /**
  *
- * @param uid Governments UID to fetch
+ * @param uid Governments UID to fetch. If null, the results will represent the currently operating government.
  * @param options Specifications to the query.
  *        - lean: Leanify the query (return as JSON)
  *        - select (Array or String): Fields to select from
@@ -26,12 +27,31 @@ module.exports = {
  * @returns {Promise<Document>}
  */
 async function getGovernmentByUID(uid, options = DefaultQueryOptions) {
-    const gov = await optionsQuery(Government.findOne({uid}), options);
+    let gov;
+
+    if (uid) {
+        gov = await optionsQuery(Government.findOne({uid}), options);
+    } else {
+        gov = await getCurrentGovernment(options);
+    }
+
     if (!gov) {
-        throw createError(404, "Government could not be found by that UID.");
+        throw createError(404, uid ?
+            "Government could not be found by that UID."
+            : "No currently operating government."
+        );
     }
 
     return gov;
+}
+
+/**
+ * Returns the currently operating government
+ * @param options
+ * @returns {Promise<Government>}
+ */
+async function getCurrentGovernment(options = DefaultQueryOptions) {
+    return await optionsQuery(Government.findOne({current: true}), options);
 }
 
 /**
