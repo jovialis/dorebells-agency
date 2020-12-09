@@ -2,12 +2,6 @@
  * Created on 12/6/20 by jovialis (Dylan Hanson)
  **/
 
-module.exports = {
-    optionsQuery,
-    DefaultQueryOptions,
-    PopulateField
-};
-
 /**
  * Represents a set of default options for a database Query.
  * @field lean - Return a purely JSON document (super lightweight).
@@ -20,6 +14,13 @@ const DefaultQueryOptions = {
     select: [],
     populate: []
 };
+
+module.exports = {
+    optionsQuery,
+    DefaultQueryOptions,
+    PopulateField
+};
+
 
 function PopulateField(path, field) {
     return {path, select: field};
@@ -40,7 +41,7 @@ async function optionsQuery(query, options = DefaultQueryOptions) {
         options.populate = [options.populate];
     }
 
-    if (options.lean) {
+    if (options.lean !== false) {
         query = query.lean();
     }
 

@@ -6,12 +6,8 @@ const express = require('express');
 const router = express.Router();
 
 const auth = require('./handlers/auth');
-const sessions = require('./handlers/sessions');
 
 // Use all required routes
-router.use([
-    sessions,
-    auth
-]);
+router.use(auth);
 
 module.exports = router;

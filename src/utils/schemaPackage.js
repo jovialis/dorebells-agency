@@ -26,7 +26,7 @@ function CompoundObjectSchemaPackage(objects) {
     objects.forEach(o => {
         this.resolver = {
             ...this.resolver,
-            ...o
+            ...o.resolver
         };
     });
 }

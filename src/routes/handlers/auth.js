@@ -37,7 +37,7 @@ passport.use(new Strategy({
 
         // Log in the user
         try {
-            const { _id, uid } = await auth.loginUser(googleId, name, thumbnail, email);
+            const { _id, uid } = await auth.loginUser(googleId, {name, thumbnail, email});
             cb(null, {_id, uid});
         } catch (e) {
             console.log(e);

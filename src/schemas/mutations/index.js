@@ -5,10 +5,12 @@
 const {ObjectSchemaPackage} = require('../../utils/schemaPackage');
 
 const Petitions = require('./Petitions');
+const Governments = require('./Governments');
 
 // ADD ALL NEW MUTATIONS HERE
 const mutations = [
     Petitions,
+    Governments
 ];
 
 // Add all Mutations to a Schema

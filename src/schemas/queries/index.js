@@ -6,11 +6,13 @@ const {ObjectSchemaPackage} = require('../../utils/schemaPackage');
 
 const Petitions = require('./Petitions');
 const Users = require('./Users');
+const Governments = require('./Governments');
 
 // ADD ALL NEW QUERIES HERE
 const queries = [
     Petitions,
-    Users
+    Users,
+    Governments
 ];
 
 const schema = `

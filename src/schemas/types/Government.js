@@ -17,6 +17,7 @@ const schema = `
         petitions: [Petition]!
         members: [User]!
         current: Boolean!
+        createdOn: Date!
     }
 `;
 
@@ -30,6 +31,9 @@ const resolver = {
         },
         async members(parent, _args, { dataSources }) {
             return dataSources.governmentAPI.getMembers(parent.uid);
+        },
+        async createdOn(parent, _args, {dataSources}) {
+            return dataSources.governmentAPI.getCreationDate(parent.uid);
         }
     }
 }

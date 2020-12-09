@@ -13,6 +13,7 @@ const Signature = mongoose.model('Petition');
 const {optionsQuery, DefaultQueryOptions} = require('../utils/queryOptionsWrapper');
 
 module.exports = {
+    getPetitionsByGovernmentUID,
     getPetitionsByGovernment,
     getPetitionSignaturesByUID,
 
@@ -22,7 +23,18 @@ module.exports = {
     getPetitionByUID,
     getTagByUID,
     getTargetByUID,
-    getSignatureByUID
+    getSignatureByUID,
+
+    getPetitionsByTagUID,
+    getPetitionsByTargetUID,
+
+    listGovernmentTags,
+    listGovernmentTargets,
+
+    createPetition,
+
+    createTag,
+    createTarget
 };
 
 /**
@@ -38,6 +50,36 @@ async function getPetitionByUID(uid, options = DefaultQueryOptions) {
     }
 
     return petition;
+}
+
+/**
+ * Returns a list of all Targets available for a given Government
+ * @param governmentUID
+ * @param options
+ * @returns {Promise<void>}
+ */
+async function listGovernmentTargets(governmentUID, options = DefaultQueryOptions) {
+    const governments = require('./governments');
+    const {_id: governmentID} = await governments.getGovernmentByUID(governmentUID, {
+        select: '_id'
+    });
+
+    return await optionsQuery(Target.find({government: governmentID}), options);
+}
+
+/**
+ * Returns a list of all Tags available for a given Government
+ * @param governmentUID
+ * @param options
+ * @returns {Promise<void>}
+ */
+async function listGovernmentTags(governmentUID, options = DefaultQueryOptions) {
+    const governments = require('./governments');
+    const {_id: governmentID} = await governments.getGovernmentByUID(governmentUID, {
+        select: '_id'
+    });
+
+    return await optionsQuery(Tag.find({government: governmentID}), options);
 }
 
 /**
@@ -96,6 +138,52 @@ async function getPetitionsByGovernment(government, options = DefaultQueryOption
 }
 
 /**
+ * Returns petitions for a given government by its UID.
+ * @param uid Government UID.
+ * @param options Query options.
+ * @returns {Promise<[Document]>}
+ */
+async function getPetitionsByGovernmentUID(uid, options = DefaultQueryOptions) {
+    const governments = require('./governments');
+    const {_id: governmentID} = await governments.getGovernmentByUID(uid, {
+        select: '_id'
+    });
+
+    return await getPetitionsByGovernment(governmentID);
+}
+
+
+/**
+ * Returns petitions for a given target by its UID.
+ * @param uid Target UID.
+ * @param options Query options.
+ * @returns {Promise<[Petition]>}
+ */
+async function getPetitionsByTargetUID(uid, options = DefaultQueryOptions) {
+    // Grab the target
+    const {_id: targetID} = await getTargetByUID(uid, {
+        select: '_id'
+    })
+
+    return await optionsQuery(Petition.find({ target: targetID }), options);
+}
+
+/**
+ * Returns petitions for a given tag by its UID.
+ * @param uid Target UID.
+ * @param options Query options.
+ * @returns {Promise<[Document]>}
+ */
+async function getPetitionsByTagUID(uid, options = DefaultQueryOptions) {
+    // Grab the target
+    const {_id: tagID} = await getTagByUID(uid, {
+        select: '_id'
+    })
+
+    return await optionsQuery(Petition.find({ tag: tagID }), options);
+}
+
+/**
  * Returns a list of Signatures by the Petition's UID
  * @param uid
  * @param options
@@ -136,5 +224,84 @@ async function getSignatureReferralCountByUID(uid) {
     return Signature.countDocuments({
         referrer: signature,
         petition: signature.petition
+    });
+}
+
+async function createTarget(user, governmentUID, {name}) {
+    // Fetch the Government
+    const governments = require('./governments');
+    const {_id: governmentID} = await governments.getGovernmentByUID(governmentUID, {
+        select: '_id'
+    });
+
+    // Create and return a new target
+    return await Target.create({
+        creator: user,
+        government: governmentID,
+        name
+    });
+}
+
+async function createTag(user, governmentUID, {name}) {
+    // Fetch the Tag
+    const governments = require('./governments');
+    const {_id: governmentID} = await governments.getGovernmentByUID(governmentUID, {
+        select: '_id'
+    });
+
+    // Create and return a new target
+    return await Tag.create({
+        creator: user,
+        government: governmentID,
+        name
+    });
+}
+
+/**
+ * Creates a new Petition by the provided User and Input.
+ * @param user
+ * @param name
+ * @param description
+ * @param targetUID
+ * @param tagUIDs
+ * @returns {Promise<Petition>}
+ */
+async function createPetition(user, {name, description, target: targetUID, tags: tagUIDs}) {
+    // Fetch the current government
+    const governments = require('./governments');
+    const {_id: governmentID} = await governments.getCurrentGovernment({
+        select: '_id'
+    });
+
+    // Make sure Tag UIDs are unique
+    tagUIDs = tagUIDs.reduce((list, tag) => {
+        if (!list.includes(tag)) {
+            list.push(tag);
+        }
+        return list;
+    }, []);
+
+    // Fetch the Tags by their UIDs, returning a list of UIDs.
+    const tags = await optionsQuery(Tag.find({uid: { $in: tagUIDs }}), {
+        select: '_id'
+    });
+
+    // Fetch the Target by its UID
+    const target = await optionsQuery(Target.findOne({ uid: targetUID }), {
+        select: '_id'
+    });
+
+    if (tags.length !== tagUIDs.length || !target) {
+        throw createError(400, "Invalid categorization UIDs provided.");
+    }
+
+    // Create the new Petition.
+    return await Petition.create({
+        creator: user,
+        target: target._id,
+        government: governmentID,
+        name,
+        description,
+        tags: tags.map(t => t._id)
     });
 }

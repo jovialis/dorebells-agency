@@ -6,7 +6,7 @@ const {gql} = require('apollo-server');
 
 const types = require('./types');
 const queries = require('./queries');
-// const mutations = require('./mutations');
+const mutations = require('./mutations');
 
 /**
  * Compiles all Objects, Queries, and Mutations into a single Schema
@@ -19,7 +19,7 @@ const typeDefs = gql`
     ${ queries.schema }
     
     # All Mutation Definitions
-    # ${ `mutations.schema` } << To be uncommented once mutations begin implementation.
+    ${ mutations.schema }
 `;
 
 /**
@@ -28,7 +28,7 @@ const typeDefs = gql`
 const resolvers = {
     ...types.resolver,
     ...queries.resolver,
-    // ...mutations.resolver
+    ...mutations.resolver
 };
 
 /**

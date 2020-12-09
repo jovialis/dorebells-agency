@@ -44,7 +44,7 @@ const petitionSchema = new mongoose.Schema({
     /**
      * @mark Petition Content
      */
-    title: {
+    name: {
         type: String,
         required: true
     },

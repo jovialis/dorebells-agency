@@ -17,7 +17,7 @@ const schema = `
         target: Target!
         tags: [Tag]!
 
-        title: String!
+        name: String!
         description: String!
         
         createdOn: Date!
@@ -56,6 +56,7 @@ const schema = `
         petition: Petition!
         user: User!
         
+        # Who referred the signer to the petition.
         referrer: Signature
         comment: String
         

@@ -2,16 +2,16 @@
  * Created on 12/7/20 by jovialis (Dylan Hanson)
  **/
 
-const {DataSource} = require('apollo-server');
 const error = require('http-errors');
 
-class PetitionAPI extends DataSource {
+const {UserInputError} = require('apollo-server');
+
+class PetitionAPI {
 
     /**
      * Construct and store instances of the controllers we'll need.
      */
     constructor() {
-        super();
         this.controller = require('../controllers/petitions');
     }
 
@@ -74,8 +74,34 @@ class PetitionAPI extends DataSource {
     }
 
     async getPetitionsByTag(tagUID) {
-        // TODO
+        return await this.controller.getPetitionsByTagUID(tagUID);
+    }
 
+    /**
+     * Lists all Petitions for a given Government.
+     * @param governmentUID
+     * @returns {Promise<[Petition]>}
+     */
+    async listPetitions(governmentUID) {
+        return await this.controller.getPetitionsByGovernmentUID(governmentUID);
+    }
+
+    /**
+     * Returns a list of Targets by Government
+     * @param governmentUID
+     * @returns {Promise<[Target]>}
+     */
+    async getGovernmentTargets(governmentUID) {
+        return await this.controller.listGovernmentTargets(governmentUID);
+    }
+
+    /**
+     * Returns a list of Tags by Government
+     * @param governmentUID
+     * @returns {Promise<[Tag]>}
+     */
+    async getGovernmentTags(governmentUID) {
+        return await this.controller.listGovernmentTags(governmentUID);
     }
 
     /**
@@ -97,8 +123,7 @@ class PetitionAPI extends DataSource {
     }
 
     async getPetitionsByTarget(targetUID) {
-        // TODO
-
+        return await this.controller.getPetitionsByTargetUID(targetUID);
     }
 
     /**
@@ -209,6 +234,47 @@ class PetitionAPI extends DataSource {
             populate: fieldName
         });
         return target[fieldName];
+    }
+
+    /**
+     * Creates a new tag for the given Government
+     * @param user
+     * @param government
+     * @param input
+     * @returns {Promise<Tag>}
+     */
+    async createTag(user, government, input) {
+        return await this.controller.createTag(user, government, input);
+    }
+
+    /**
+     * Creates a new tag for the given Government
+     * @param user
+     * @param government
+     * @param input
+     * @returns {Promise<Tag>}
+     */
+    async createTarget(user, government, input) {
+        return await this.controller.createTarget(user, government, input);
+    }
+
+    /**
+     * Creates a new Petition for the current Government.
+     * @param user
+     * @param input
+     * @returns {Promise<Petition>}
+     */
+    async createPetition(user, input) {
+        // Preflight validation
+        if (!input.target) {
+            throw new UserInputError('You must provide a petition Target!');
+        }
+
+        if (!input.tags) {
+            input.tags = [];
+        }
+
+        return await this.controller.createPetition(user, input);
     }
 
 }

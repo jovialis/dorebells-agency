@@ -4,6 +4,7 @@
 
 module.exports = {
     // Server Config Stuff
+    PORT: process.env.PORT,
     MONGODB_URI: process.env.MONGODB_URI,
     PRODUCTION: process.env.NODE_ENV === 'production',
 

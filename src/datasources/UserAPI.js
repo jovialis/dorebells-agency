@@ -2,16 +2,14 @@
  * Created on 12/5/20 by jovialis (Dylan Hanson)
  **/
 
-const {DataSource} = require('apollo-server');
 const error = require('http-errors');
 
-class UserAPI extends DataSource {
+class UserAPI {
 
     /**
      * Construct and store instances of the controllers we'll need.
      */
     constructor() {
-        super();
         this.controller = require('../controllers/users');
     }
 
