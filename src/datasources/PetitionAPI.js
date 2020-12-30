@@ -390,7 +390,7 @@ class PetitionAPI extends DataSource {
         }
 
         let signature = logic.demand(
-            await Signature.findOne({uid: signatureUID}).select(['_id', 'uid', 'likes']),
+            await Signature.findOne({uid: signatureUID}),
             "Invalid Signature provided."
         );
 
@@ -428,6 +428,42 @@ class PetitionAPI extends DataSource {
         });
 
         return count > 0;
+    }
+
+    async getPetitionSignatureTarget(petitionUID) {
+        // determine how many signatures we have
+        const signatureCount = await this.getPetitionSignatureCount(petitionUID);
+
+        // static signature targets
+        const targets = [
+            10,
+            20,
+            50,
+            100,
+            200,
+            500,
+            1000,
+            2000,
+            5000,
+            10000,
+            20000,
+            50000
+        ];
+
+        // find the first target that's greater than our signature count
+        for (const target of targets) {
+            if (target > signatureCount) {
+                return target;
+            }
+        }
+
+        return 100000;
+    }
+
+    async getPetitionIsMutable(petitionUID) {
+        // Petition is only mutable if the Government is set to Current.
+        const government = await lookup.getPopulatedFieldInPetitionByUID(petitionUID, 'government');
+        return government.current;
     }
 
 }

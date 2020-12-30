@@ -5,6 +5,7 @@
 const {MethodSchemaPackage} = require('../../utils/schemaPackage');
 
 const signatures = `
+    # Lists the top 20 trending petitions.
     trendingPetitions: [Petition]!
 
     # Lists petitions

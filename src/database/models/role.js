@@ -45,6 +45,12 @@ const roleSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    // Role color
+    color: {
+        type: String,
+        required: true,
+        default: '#000000'
+    },
     // What permissions this role has
     permissions: [{
         type: String,

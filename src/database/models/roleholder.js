@@ -37,6 +37,14 @@ const roleholderSchema = new mongoose.Schema({
         required: true
     },
 
+    // Government in which this role was held.
+    // Utility field for fetching roleholding users in a given Government.
+    government: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Government',
+        required: true
+    },
+
     // Schema representing the details about the role being removed.
     removal: new mongoose.Schema({
         // The date it was removed
@@ -50,14 +58,6 @@ const roleholderSchema = new mongoose.Schema({
         sponsor: {
             type: mongoose.Types.ObjectId,
             ref: 'User',
-            required: true
-        },
-
-        // Government in which this role was held.
-        // Utility field for fetching roleholding users in a given Government.
-        government: {
-            type: mongoose.Types.ObjectId,
-            ref: 'Government',
             required: true
         },
 

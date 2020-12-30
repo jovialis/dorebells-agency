@@ -24,11 +24,13 @@ const schema = `
         
         signatureCount: Int!
         signatures: [Signature]!
+        signatureGoal: Int!
         
         commentCount: Int!
         comments: [Signature]!
         
         canSign: Boolean!
+        mutable: Boolean!
     }
     
     type Signature {
@@ -78,6 +80,9 @@ const resolver = {
         async signatures(parent, _args, {dataSources}) {
             return await dataSources.petitionAPI.getPetitionSignatures(parent.uid);
         },
+        async signatureGoal(parent, _args, {dataSources}) {
+            return await dataSources.petitionAPI.getPetitionSignatureTarget(parent.uid);
+        },
         async commentCount(parent, _args, {dataSources}) {
             return await dataSources.petitionAPI.getPetitionCommentCount(parent.uid);
         },
@@ -86,6 +91,9 @@ const resolver = {
         },
         async canSign(parent, _args, {dataSources}) {
             return !(await dataSources.petitionAPI.userHasSigned(parent.uid));
+        },
+        async mutable(parent, _args, {dataSources}) {
+            return await dataSources.petitionAPI.getPetitionIsMutable(parent.uid);
         }
     },
     Signature: {

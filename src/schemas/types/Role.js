@@ -11,6 +11,7 @@ const {ObjectSchemaPackage} = require('../../utils/schemaPackage');
 const schema = `
     type Role {
         uid: ID!
+        color: String!
         government: Government!
         name: String!
         permissions: [String]!
