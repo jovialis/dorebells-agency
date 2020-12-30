@@ -9,22 +9,16 @@
  * @field populate - Array or string representing field names to populate.
  * @type {{select: [], populate: [], lean: boolean}}
  */
-const DefaultQueryOptions = {
+const FastQueryOptions = {
     lean: true,
     select: [],
     populate: []
 };
 
 module.exports = {
-    optionsQuery,
-    DefaultQueryOptions,
-    PopulateField
+    fastQuery,
+    FastQueryOptions
 };
-
-
-function PopulateField(path, field) {
-    return {path, select: field};
-}
 
 /**
  * Provides an easy wrapper to query w/ options like select fields, populate fields, and lean the query.
@@ -32,7 +26,7 @@ function PopulateField(path, field) {
  * @param options
  * @returns {Promise<*>}
  */
-async function optionsQuery(query, options = DefaultQueryOptions) {
+async function fastQuery(query, options = DefaultQueryOptions) {
     if (typeof(options.select) === "string") {
         options.select = [options.select];
     }

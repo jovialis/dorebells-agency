@@ -4,23 +4,72 @@
 
 const mongoose = require('mongoose');
 
+const logic = require('../utils/logic');
+
 const {fastQuery, FastQueryOptions} = require('../utils/fastQuery');
 
 module.exports = {
+    getPetitionObjectByUID,
+    getTagObjectByUID,
+    getTargetObjectByUID,
+    getSignatureObjectByUID,
+    getGovernmentObjectByUID,
+    getUserObjectByUID,
+
     getPetitionByUID,
     getTagByUID,
     getTargetByUID,
     getSignatureByUID,
     getGovernmentByUID,
+    getUserByUID,
 
     getPopulatedFieldInPetitionByUID,
     getPopulatedFieldInSignatureByUID,
     getPopulatedFieldInTagByUID,
     getPopulatedFieldInTargetByUID,
+    getPopulatedFieldInGovernmentByUID,
+    getPopulatedFieldInRoleByUID,
 
     findReferencingSignatures,
-    findReferencingPetitions
+    findReferencingPetitions,
+    findReferencingRoles
 };
+
+async function getPetitionObjectByUID(uid) {
+    return await getDocumentByUID('Petition', uid, {
+        select: '_id'
+    });
+}
+
+async function getTagObjectByUID(uid) {
+    return await getDocumentByUID('Tag', uid, {
+        select: '_id'
+    });
+}
+
+async function getTargetObjectByUID(uid) {
+    return await getDocumentByUID('Target', uid, {
+        select: '_id'
+    });
+}
+
+async function getSignatureObjectByUID(uid) {
+    return await getDocumentByUID('Signature', uid, {
+        select: '_id'
+    });
+}
+
+async function getGovernmentObjectByUID(uid) {
+    return await getGovernmentByUID(uid, {
+        select: '_id'
+    });
+}
+
+async function getUserObjectByUID(uid) {
+    return await getUserByUID(uid, {
+        select: '_id'
+    });
+}
 
 async function getPetitionByUID(uid, options = FastQueryOptions) {
     return await getDocumentByUID('Petition', uid, options);
@@ -39,7 +88,21 @@ async function getSignatureByUID(uid, options = FastQueryOptions) {
 }
 
 async function getGovernmentByUID(uid, options = FastQueryOptions) {
-    return await getDocumentByUID('Government', uid, options);
+    let query = {};
+
+    // if no UID provided, fetch the current Government.
+    if (uid) {
+        query.uid = uid;
+    } else {
+        query.current = true;
+    }
+
+    const Model = mongoose.model('Government');
+    return await fastQuery(Model.findOne(query), options);
+}
+
+async function getUserByUID(uid, options = FastQueryOptions) {
+    return await getDocumentByUID('User', uid, options);
 }
 
 async function getDocumentByUID(modelName, uid, options) {
@@ -63,15 +126,24 @@ async function getPopulatedFieldInSignatureByUID(uid, fieldName) {
     return await getPopulatedFieldInDocumentByUID('Target', uid, fieldName);
 }
 
+async function getPopulatedFieldInGovernmentByUID(uid, fieldName) {
+    return await getPopulatedFieldInDocumentByUID('Government', uid, fieldName);
+}
+
+async function getPopulatedFieldInRoleByUID(uid, fieldName) {
+    return await getPopulatedFieldInDocumentByUID('Role', uid, fieldName);
+}
+
 async function getPopulatedFieldInDocumentByUID(modelName, uid, fieldName) {
     if (typeof fieldName !== 'string') {
         throw new Error('Please use a String for the field name to populate.');
     }
 
-    const doc = await getDocumentByUID(modelName, uid, {
+    const doc = logic.demand(await getDocumentByUID(modelName, uid, {
         select: fieldName,
         populate: fieldName
-    });
+    }), 'Invalid document UID.');
+
     return doc[fieldName];
 }
 
@@ -81,6 +153,10 @@ async function findReferencingSignatures(fieldName, document, options = FastQuer
 
 async function findReferencingPetitions(fieldName, document, options = FastQueryOptions) {
     return await findReferencingDocuments('Petition', fieldName, document, options);
+}
+
+async function findReferencingRoles(fieldName, document, options = FastQueryOptions) {
+    return await findReferencingDocuments('Role', fieldName, document, options);
 }
 
 async function findReferencingDocuments(modelName, fieldName, document, options) {
