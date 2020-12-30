@@ -12,6 +12,8 @@ const Petition = mongoose.model('Petition');
 const Tag = mongoose.model('Tag');
 const Target = mongoose.model('Target');
 
+const petitions = require('../helpers/petitions');
+
 const lookup = require('../helpers/lookup');
 const logic = require('../utils/logic');
 
@@ -31,6 +33,10 @@ class PetitionAPI extends DataSource {
      */
     initialize(config) {
         this.context = config.context;
+    }
+
+    async getTrendingPetitions() {
+        return petitions.getTrendingPetitions();
     }
 
     async getPetition(petitionUID) {
@@ -82,7 +88,9 @@ class PetitionAPI extends DataSource {
             "Invalid Petition UID."
         );
 
-        return await lookup.findReferencingSignatures('petition', petition);
+        return Signature.find({petition}).sort({createdOn: -1}).lean();
+
+        // return await lookup.findReferencingSignatures('petition', petition);
     }
 
     async getPetitionComments(petitionUID) {
@@ -333,6 +341,11 @@ class PetitionAPI extends DataSource {
     async signPetition(petitionUID, {referer: referralCode, comment}) {
         const user = await logic.demandUser(this.context.user);
 
+        // Make sure the user hasn't signed
+        if (await this.userHasSigned(petitionUID)) {
+            throw new UserInputError("User has already signed that petition.");
+        }
+
         // Ensure that's a valid Petition
         const petition = logic.demand(
             await lookup.getPetitionObjectByUID(petitionUID),
@@ -354,12 +367,27 @@ class PetitionAPI extends DataSource {
         });
     }
 
-    async likeSignature(signatureUID) {
-        if (await this.userHasLiked(signatureUID)) {
-            throw new UserInputError("User has already liked that Signature!");
+    async userHasSigned(petitionUID) {
+        const user = this.context.user;
+        if (!user) {
+            return false;
         }
 
+        const petition = logic.demand(
+            await lookup.getPetitionObjectByUID(petitionUID),
+            "Invalid Signature provided."
+        );
+
+        const count = await Signature.countDocuments({ petition, user });
+        return count > 0;
+    }
+
+    async likeSignature(signatureUID) {
         const user = await logic.demandUser(this.context.user);
+
+        if (await this.userHasLiked(signatureUID)) {
+            throw new UserInputError("User has already liked that Comment!");
+        }
 
         let signature = logic.demand(
             await Signature.findOne({uid: signatureUID}).select(['_id', 'uid', 'likes']),

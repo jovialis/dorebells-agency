@@ -4,16 +4,13 @@
 
 const {CompoundObjectSchemaPackage} = require('../../utils/schemaPackage');
 
-const Date = require('./scalars/Date');
-
-const User = require('./User');
-const Government = require('./Government');
-const Petition = require('./Petition');
-
 module.exports = new CompoundObjectSchemaPackage([
-    Date,
+    require('./scalars/Date'),
 
-    User,
-    Government,
-    Petition
+    require('./User'),
+    require('./Government'),
+    require('./Petition'),
+    require('./Role'),
+    require('./Tag'),
+    require('./Target')
 ]);

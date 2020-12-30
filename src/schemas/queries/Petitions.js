@@ -5,6 +5,8 @@
 const {MethodSchemaPackage} = require('../../utils/schemaPackage');
 
 const signatures = `
+    trendingPetitions: [Petition]!
+
     # Lists petitions
     petitions(government: ID): [Petition]!
 
@@ -21,6 +23,9 @@ const signatures = `
 `;
 
 const resolvers = {
+    async trendingPetitions(_parent, _args, {dataSources}) {
+        return await dataSources.petitionAPI.getTrendingPetitions();
+    },
     async petition(parent, {id}, {dataSources}) {
         return await dataSources.petitionAPI.getPetition(id);
     },

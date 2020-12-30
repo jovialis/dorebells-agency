@@ -18,7 +18,7 @@ const schema = `
         members: [User]!
         current: Boolean
         createdOn: Date!
-        archived: Boolean
+        archived: Boolean!
         roles: [Role]!
     }
 `;
@@ -39,6 +39,9 @@ const resolver = {
         },
         async roles(parent, _args, {dataSources}) {
             return dataSources.governmentAPI.getGovernmentRoles(parent.uid);
+        },
+        archived(parent) {
+            return parent.archived ? parent.archived : false;
         }
     }
 }

@@ -27,6 +27,8 @@ const schema = `
         
         commentCount: Int!
         comments: [Signature]!
+        
+        canSign: Boolean!
     }
     
     type Signature {
@@ -46,7 +48,8 @@ const schema = `
         
         likeCount: Int!
         likes: [SignatureLike]!
-        hasLiked: Boolean!
+        
+        canLike: Boolean!
     }
     
     type SignatureLike {
@@ -80,6 +83,9 @@ const resolver = {
         },
         async comments(parent, _args, {dataSources}) {
             return await dataSources.petitionAPI.getPetitionComments(parent.uid);
+        },
+        async canSign(parent, _args, {dataSources}) {
+            return !(await dataSources.petitionAPI.userHasSigned(parent.uid));
         }
     },
     Signature: {
@@ -98,8 +104,8 @@ const resolver = {
         likeCount(parent, _args, {dataSources}) {
             return parent.likes ? parent.likes.length : 0;
         },
-        async hasLiked(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.userHasLiked(parent.uid);
+        async canLike(parent, _args, {dataSources}) {
+            return !(await dataSources.petitionAPI.userHasLiked(parent.uid));
         }
     },
     SignatureLike: {

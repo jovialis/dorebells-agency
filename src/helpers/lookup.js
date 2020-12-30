@@ -123,7 +123,7 @@ async function getPopulatedFieldInTargetByUID(uid, fieldName) {
 }
 
 async function getPopulatedFieldInSignatureByUID(uid, fieldName) {
-    return await getPopulatedFieldInDocumentByUID('Target', uid, fieldName);
+    return await getPopulatedFieldInDocumentByUID('Signature', uid, fieldName);
 }
 
 async function getPopulatedFieldInGovernmentByUID(uid, fieldName) {

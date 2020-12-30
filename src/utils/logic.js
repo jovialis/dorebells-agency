@@ -9,14 +9,14 @@ module.exports = {
     demandUser
 };
 
-async function demandUser(user) {
+function demandUser(user) {
     if (!user) {
         throw new AuthenticationError('User must be logged in.');
     }
     return user;
 }
 
-async function demand(val, message) {
+function demand(val, message) {
     if (!val) {
         throw new UserInputError(message, {})
     }
