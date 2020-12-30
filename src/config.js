@@ -7,13 +7,20 @@ module.exports = {
     PORT: process.env.PORT,
     MONGODB_URI: process.env.MONGODB_URI,
     PRODUCTION: process.env.NODE_ENV === 'production',
+    DEVELOPMENT: process.env.NODE_ENV !== 'production',
 
     // Application Settings
     ENFORCE_AUTHENTICATION_DOMAIN: process.env.ENFORCE_DOMAIN_AUTHENTICATION, // Whether to only allow Vanderbilt-specific emails
     AUTHENTICATION_DOMAIN: process.env.AUTHENTICATION_DOMAIN, // The Vanderbilt email extension (vanderbilt.edu)
 
+    // CORS stuff
+    CORS_ORIGINS: (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
+
     // Session Stuff
     SESSION_SECRET: process.env.SESSION_SECRET,
+
+    // Authorization token
+    LOGIN_TOKEN_NAME: process.env.LOGIN_TOKEN_NAME,
 
     // Google Authorization Stuff
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,

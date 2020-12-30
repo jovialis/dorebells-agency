@@ -53,8 +53,14 @@ const governmentSchema = new mongoose.Schema({
     current: {
         type: Boolean,
         default: false
+    },
+    // Whether or not this government has been archived
+    archived: {
+        type: Boolean,
+        default: false
     }
 }, {
+    setDefaultsOnInsert: true,
     collection: 'governments'
 });
 

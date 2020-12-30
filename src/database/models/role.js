@@ -48,7 +48,8 @@ const roleSchema = new mongoose.Schema({
     // What permissions this role has
     permissions: [{
         type: String,
-        enum: ['EDIT_ME']
+        enum: Object.values(require('../../permissions')),
+        default: []
     }],
 
     /**

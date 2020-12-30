@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 
-const auth = require('./handlers/auth');
+const auth = require('./auth');
 
 // Use all required routes
 router.use(auth);

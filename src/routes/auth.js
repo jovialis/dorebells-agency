@@ -1,20 +1,17 @@
 /**
- * Created by jovialis (Dylan Hanson) on 9/11/20
+ * Created on 12/17/20 by jovialis (Dylan Hanson)
  **/
 
-const config = require('../../config');
+const config = require('../config');
 const createError = require('http-errors');
 
-const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
-
-const auth = require('../../controllers/auth');
 
 const passport = require('passport');
 const Strategy = require('passport-google-oauth20').Strategy;
 
-const User = mongoose.model('User');
+const auth = require('../helpers/auth');
 
 // Configure Passport for client authentication
 passport.use(new Strategy({
@@ -37,8 +34,8 @@ passport.use(new Strategy({
 
         // Log in the user
         try {
-            const { _id, uid } = await auth.loginUser(googleId, {name, thumbnail, email});
-            cb(null, {_id, uid});
+            const token = await auth.loginGoogleUser(googleId, {name, thumbnail, email});
+            cb(null, token);
         } catch (e) {
             console.log(e);
             cb(null);
@@ -46,33 +43,26 @@ passport.use(new Strategy({
     }
 }));
 
-passport.serializeUser(function (user, cb) {
-    cb(null, user.uid);
+passport.serializeUser(function (token, cb) {
+    cb(null, token);
 });
 
 // Configure passport
 router.use(passport.initialize());
 
-router.get(config.GOOGLE_OAUTH_ENDPOINT, passport.authenticate('google', {
-    hd: config.ENFORCE_AUTHENTICATION_DOMAIN ? config.AUTHENTICATION_DOMAIN : undefined,
-    prompt: config.ENFORCE_AUTHENTICATION_DOMAIN ? undefined : 'select_account',
-    scope: ['email', 'profile', 'openid']
-}));
-
-router.get(config.GOOGLE_OAUTH_REDIRECT, passport.authenticate('google', {
-    failureRedirect: '/login?failure=true'
-}), (req, res) => {
+// Make sure this is only callable by Oscar server.
+router.get(config.GOOGLE_OAUTH_ENDPOINT, [
+    passport.authenticate('google')
+], (req, res) => {
     // Store user in session, vs. Passport so we don't have to re-fetch user every request
-    req.session.user = req.user;
+    const token = req.user;
+    if (!token) {
+        throw new createError(500, "Something went wrong when authenticating user.");
+    }
 
-    const redirect = req.session.redirect;
-    req.session.redirect = undefined;
-    res.redirect(redirect ? redirect : '/');
-});
-
-router.get(config.LOGOUT_ENDPOINT, (req, res) => {
-    req.session.user = null;
-    res.redirect('/login');
+    res.json({
+        token
+    });
 });
 
 module.exports = router;

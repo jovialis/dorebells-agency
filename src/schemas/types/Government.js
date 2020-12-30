@@ -16,24 +16,29 @@ const schema = `
         creator: User!
         petitions: [Petition]!
         members: [User]!
-        current: Boolean!
+        current: Boolean
         createdOn: Date!
+        archived: Boolean
+        roles: [Role]!
     }
 `;
 
 const resolver = {
     Government: {
         async creator(parent, _args, { dataSources }) {
-            return dataSources.governmentAPI.getCreator(parent.uid);
+            return dataSources.governmentAPI.getGovernmentCreator(parent.uid);
         },
         async petitions(parent, _args, { dataSources }) {
-            return dataSources.governmentAPI.getPetitions(parent.uid);
+            return dataSources.governmentAPI.getGovernmentPetitions(parent.uid);
         },
         async members(parent, _args, { dataSources }) {
-            return dataSources.governmentAPI.getMembers(parent.uid);
+            return dataSources.governmentAPI.getGovernmentMembers(parent.uid);
         },
-        async createdOn(parent, _args, {dataSources}) {
-            return dataSources.governmentAPI.getCreationDate(parent.uid);
+        async createdOn(parent) {
+            return parent.timestamp;
+        },
+        async roles(parent, _args, {dataSources}) {
+            return dataSources.governmentAPI.getGovernmentRoles(parent.uid);
         }
     }
 }

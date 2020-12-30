@@ -6,18 +6,18 @@ const {MethodSchemaPackage} = require('../../utils/schemaPackage');
 
 const signatures = `
     # Allows a logged in user to fetch a petition by its ID.
-    listGovernments: [Government]
+    governments: [Government]
     
     # Fetches a given government. Returns the current government if UID is not specified.
-    getGovernment(uid: ID): Government!
+    government(id: ID): Government!
 `;
 
 const resolvers = {
-    async listGovernments(parent, _args, {user, dataSources: {governmentAPI}}) {
-        return await governmentAPI.listGovernments();
+    async governments(parent, _args, {dataSources}) {
+        return await dataSources.governmentAPI.getGovernments();
     },
-    async getGovernment(parent, {uid}, {user, dataSources: {governmentAPI}}) {
-        return await governmentAPI.getGovernment(uid);
+    async government(parent, {id}, {dataSources}) {
+        return await dataSources.governmentAPI.getGovernment(id);
     },
 };
 

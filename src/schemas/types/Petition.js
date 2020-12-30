@@ -24,30 +24,9 @@ const schema = `
         
         signatureCount: Int!
         signatures: [Signature]!
-    }
-    
-    type Tag {
-        uid: ID!
-        government: Government!
         
-        name: String!
-        
-        createdOn: Date!
-        creator: User!
-        
-        petitions: [Petition]!
-    }
-    
-    type Target {
-        uid: ID!
-        government: Government!
-        
-        name: String!
-        
-        petitions: [Petition]!
-        
-        createdOn: Date!
-        creator: User!
+        commentCount: Int!
+        comments: [Signature]!
     }
     
     type Signature {
@@ -64,51 +43,44 @@ const schema = `
         numReferrals: Int!
         
         createdOn: Date!
+        
+        likeCount: Int!
+        likes: [SignatureLike]!
+        hasLiked: Boolean!
+    }
+    
+    type SignatureLike {
+        user: User!
+        timestamp: Date!
     }
 `;
 
 const resolver = {
     Petition: {
         async creator(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getCreator(parent.uid);
+            return await dataSources.petitionAPI.getPetitionCreator(parent.uid);
         },
         async government(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getGovernment(parent.uid);
+            return await dataSources.petitionAPI.getPetitionGovernment(parent.uid);
         },
         async target(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getTarget(parent.uid);
+            return await dataSources.petitionAPI.getPetitionTarget(parent.uid);
         },
         async tags(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getTags(parent.uid);
+            return await dataSources.petitionAPI.getPetitionTags(parent.uid);
         },
         async signatureCount(parent, _args, {dataSources}) {
             return await dataSources.petitionAPI.getPetitionSignatureCount(parent.uid)
         },
         async signatures(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getSignatures(parent.uid);
+            return await dataSources.petitionAPI.getPetitionSignatures(parent.uid);
+        },
+        async commentCount(parent, _args, {dataSources}) {
+            return await dataSources.petitionAPI.getPetitionCommentCount(parent.uid);
+        },
+        async comments(parent, _args, {dataSources}) {
+            return await dataSources.petitionAPI.getPetitionComments(parent.uid);
         }
-    },
-    Tag: {
-        async government(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getTagGovernment(parent.uid);
-        },
-        async petitions(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getPetitionsByTag(parent.uid);
-        },
-        async creator(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getTagCreator(parent.uid);
-        },
-    },
-    Target: {
-        async government(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getTargetGovernment(parent.uid);
-        },
-        async petitions(parent, _args, { dataSources }) {
-            return await dataSources.petitionAPI.getPetitionsByTarget(parent.uid);
-        },
-        async creator(parent, _args, {dataSources}) {
-            return await dataSources.petitionAPI.getTargetCreator(parent.uid);
-        },
     },
     Signature: {
         async petition(parent, _args, {dataSources}) {
@@ -122,6 +94,17 @@ const resolver = {
         },
         async numReferrals(parent, _args, {dataSources}) {
             return await dataSources.petitionAPI.getSignatureReferralCount(parent.uid);
+        },
+        likeCount(parent, _args, {dataSources}) {
+            return parent.likes ? parent.likes.length : 0;
+        },
+        async hasLiked(parent, _args, {dataSources}) {
+            return await dataSources.petitionAPI.userHasLiked(parent.uid);
+        }
+    },
+    SignatureLike: {
+        async user(parent, _args, {dataSources}) {
+            return await dataSources.userAPI.getUserByObjectID(parent.user);
         }
     }
 }

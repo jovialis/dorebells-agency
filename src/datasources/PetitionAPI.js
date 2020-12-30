@@ -3,16 +3,25 @@
  **/
 
 const error = require('http-errors');
-
+const mongoose = require('mongoose');
 const {UserInputError} = require('apollo-server');
+const {DataSource} = require('apollo-datasource')
 
-class PetitionAPI {
+const Signature = mongoose.model('Signature');
+const Petition = mongoose.model('Petition');
+const Tag = mongoose.model('Tag');
+const Target = mongoose.model('Target');
+
+const lookup = require('../helpers/lookup');
+const logic = require('../utils/logic');
+
+class PetitionAPI extends DataSource {
 
     /**
      * Construct and store instances of the controllers we'll need.
      */
     constructor() {
-        this.controller = require('../controllers/petitions');
+        super();
     }
 
     /**
@@ -24,13 +33,20 @@ class PetitionAPI {
         this.context = config.context;
     }
 
+    async getPetition(petitionUID) {
+        return logic.demand(
+            await lookup.getPetitionByUID(petitionUID),
+            "Invalid Petition UID."
+        );
+    }
+
     /**
      * Returns the creator of a Petition
      * @param petitionUID
      * @returns {Promise<User>}
      */
-    async getCreator(petitionUID) {
-        return await this.getPopulatedFieldInPetition(petitionUID, 'creator');
+    async getPetitionCreator(petitionUID) {
+        return await lookup.getPopulatedFieldInPetitionByUID(petitionUID, 'creator');
     }
 
     /**
@@ -38,8 +54,8 @@ class PetitionAPI {
      * @param petitionUID
      * @returns {Promise<Government>}
      */
-    async getGovernment(petitionUID) {
-        return await this.getPopulatedFieldInPetition(petitionUID, 'government');
+    async getPetitionGovernment(petitionUID) {
+        return await lookup.getPopulatedFieldInPetitionByUID(petitionUID, 'government');
     }
 
     /**
@@ -47,8 +63,8 @@ class PetitionAPI {
      * @param petitionUID
      * @returns {Promise<Target>}
      */
-    async getTarget(petitionUID) {
-        return await this.getPopulatedFieldInPetition(petitionUID, 'target');
+    async getPetitionTarget(petitionUID) {
+        return await lookup.getPopulatedFieldInPetitionByUID(petitionUID, 'target');
     }
 
     /**
@@ -56,12 +72,51 @@ class PetitionAPI {
      * @param petitionUID
      * @returns {Promise<[Tag]>}
      */
-    async getTags(petitionUID) {
-        return await this.getPopulatedFieldInPetition(petitionUID, 'tags');
+    async getPetitionTags(petitionUID) {
+        return await lookup.getPopulatedFieldInPetitionByUID(petitionUID, 'tags');
     }
 
-    async getSignatures(petitionUID) {
-        return await this.controller.getPetitionSignaturesByUID(petitionUID);
+    async getPetitionSignatures(petitionUID) {
+        const petition = await logic.demand(
+            await lookup.getPetitionObjectByUID(petitionUID),
+            "Invalid Petition UID."
+        );
+
+        return await lookup.findReferencingSignatures('petition', petition);
+    }
+
+    async getPetitionComments(petitionUID) {
+        const petition = await logic.demand(
+            await lookup.getPetitionObjectByUID(petitionUID),
+            "Invalid Petition UID."
+        );
+
+        let res = await Signature.find({
+            petition,
+            comment: {
+                $exists: true,
+                $ne: null
+            }
+        });
+
+        // Sort signatures by number of likes
+        res = res.sort((a, b) => b.likes.length - a.likes.length);
+        return res;
+    }
+
+    async getPetitionCommentCount(petitionUID) {
+        const petition = await logic.demand(
+            await lookup.getPetitionObjectByUID(petitionUID),
+            "Invalid Petition UID."
+        );
+
+        return Signature.countDocuments({
+            petition,
+            comment: {
+                $exists: true,
+                $ne: null
+            }
+        });
     }
 
     /**
@@ -70,38 +125,34 @@ class PetitionAPI {
      * @returns {Promise<Government>}
      */
     async getTagGovernment(tagUID) {
-        return await this.getPopulatedFieldInTag(tagUID, 'government');
+        return await lookup.getPopulatedFieldInTagByUID(tagUID, 'government');
     }
 
     async getPetitionsByTag(tagUID) {
-        return await this.controller.getPetitionsByTagUID(tagUID);
+        const tag = await logic.demand(
+            await lookup.getTagObjectByUID(tagUID),
+            "Invalid Tag UID."
+        );
+
+        return await this.lookup.findReferencingPetitions('tag', tag);
     }
 
-    /**
-     * Lists all Petitions for a given Government.
-     * @param governmentUID
-     * @returns {Promise<[Petition]>}
-     */
-    async listPetitions(governmentUID) {
-        return await this.controller.getPetitionsByGovernmentUID(governmentUID);
+    async getPetitionsByGovernment(governmentUID) {
+        const government = await logic.demand(
+            await lookup.getTagObjectByUID(governmentUID),
+            "Invalid Government UID."
+        );
+
+        return await this.lookup.findReferencingPetitions('government', government);
     }
 
-    /**
-     * Returns a list of Targets by Government
-     * @param governmentUID
-     * @returns {Promise<[Target]>}
-     */
-    async getGovernmentTargets(governmentUID) {
-        return await this.controller.listGovernmentTargets(governmentUID);
-    }
+    async getPetitionsByTarget(targetUID) {
+        const target = await logic.demand(
+            await lookup.getTargetObjectByUID(targetUID),
+            "Invalid Target UID."
+        );
 
-    /**
-     * Returns a list of Tags by Government
-     * @param governmentUID
-     * @returns {Promise<[Tag]>}
-     */
-    async getGovernmentTags(governmentUID) {
-        return await this.controller.listGovernmentTags(governmentUID);
+        return await this.lookup.findReferencingPetitions('target', target);
     }
 
     /**
@@ -110,7 +161,7 @@ class PetitionAPI {
      * @returns {Promise<User>}
      */
     async getTagCreator(tagUID) {
-        return await this.getPopulatedFieldInTag(tagUID, 'creator');
+        return await lookup.getPopulatedFieldInTagByUID(tagUID, 'creator');
     }
 
     /**
@@ -119,12 +170,9 @@ class PetitionAPI {
      * @returns {Promise<Government>}
      */
     async getTargetGovernment(targetUID) {
-        return await this.getPopulatedFieldInTarget(targetUID, 'government');
+        return await lookup.getPopulatedFieldInTargetByUID(targetUID, 'government');
     }
 
-    async getPetitionsByTarget(targetUID) {
-        return await this.controller.getPetitionsByTargetUID(targetUID);
-    }
 
     /**
      * Returns the Creator of a Target
@@ -132,7 +180,7 @@ class PetitionAPI {
      * @returns {Promise<User>}
      */
     async getTargetCreator(targetUID) {
-        return await this.getPopulatedFieldInTarget(targetUID, 'creator');
+        return await lookup.getPopulatedFieldInTargetByUID(targetUID, 'creator');
     }
 
     /**
@@ -141,7 +189,7 @@ class PetitionAPI {
      * @returns {Promise<Petition>}
      */
     async getSignaturePetition(signatureUID) {
-        return await this.getPopulatedFieldInSignature(signatureUID, 'petition');
+        return await lookup.getPopulatedFieldInSignatureByUID(signatureUID, 'petition');
     }
 
     /**
@@ -150,7 +198,7 @@ class PetitionAPI {
      * @returns {Promise<User>}
      */
     async getSignatureUser(signatureUID) {
-        return await this.getPopulatedFieldInSignature(signatureUID, 'user');
+        return await lookup.getPopulatedFieldInSignatureByUID(signatureUID, 'user');
     }
 
     /**
@@ -159,7 +207,7 @@ class PetitionAPI {
      * @returns {Promise<User>}
      */
     async getSignatureReferrer(signatureUID) {
-        return await this.getPopulatedFieldInSignature(signatureUID, 'referrer');
+        return await lookup.getPopulatedFieldInSignatureByUID(signatureUID, 'referrer');
     }
 
     /**
@@ -168,7 +216,12 @@ class PetitionAPI {
      * @returns {Promise<Number>}
      */
     async getSignatureReferralCount(signatureUID) {
-        return await this.controller.getSignatureReferralCountByUID(signatureUID);
+        const referrer = await logic.demand(
+            await lookup.getSignatureObjectByUID(signatureUID),
+            "Invalid Signature UID."
+        );
+
+        return Signature.countDocuments({ referrer });
     }
 
     /**
@@ -177,63 +230,12 @@ class PetitionAPI {
      * @returns {Promise<Number>}
      */
     async getPetitionSignatureCount(petitionUID) {
-        return await this.controller.getPetitionSignatureCountByUID(petitionUID);
-    }
+        const petition = await logic.demand(
+            await lookup.getPetitionObjectByUID(petitionUID),
+            "Invalid Petition UID."
+        );
 
-    /**
-     * Utility method to populate and return a field in a given Petition
-     * @param uid
-     * @param fieldName
-     * @returns {Promise<*>}
-     */
-    async getPopulatedFieldInPetition(uid, fieldName) {
-        const petition = await this.controller.getPetitionByUID(uid, {
-            select: fieldName,
-            populate: fieldName
-        });
-        return petition[fieldName];
-    }
-
-    /**
-     * Utility method to populate and return a field in a given Tag
-     * @param uid
-     * @param fieldName
-     * @returns {Promise<*>}
-     */
-    async getPopulatedFieldInTag(uid, fieldName) {
-        const tag = await this.controller.getTagByUID(uid, {
-            select: fieldName,
-            populate: fieldName
-        });
-        return tag[fieldName];
-    }
-
-    /**
-     * Utility method to populate and return a field in a given Target
-     * @param uid
-     * @param fieldName
-     * @returns {Promise<*>}
-     */
-    async getPopulatedFieldInTarget(uid, fieldName) {
-        const target = await this.controller.getTargetByUID(uid, {
-            select: fieldName,
-            populate: fieldName
-        });
-        return target[fieldName];
-    }
-
-    /**
-     * Utility method to populate and return a field in a given Target
-     * @param uid
-     * @param fieldName
-     * @returns {Promise<*>}
-     */
-    async getPopulatedFieldInSignature(uid, fieldName) {
-        const target = await this.controller.getSignatureByUID(uid, {
-            select: fieldName,
-            populate: fieldName
-        });
-        return target[fieldName];
+        return Signature.countDocuments({ petition });
     }
 
     /**
@@ -241,10 +243,22 @@ class PetitionAPI {
      * @param user
      * @param government
      * @param input
-     * @returns {Promise<Tag>}
+     * @returns {Promise<Document>}
      */
-    async createTag(user, government, input) {
-        return await this.controller.createTag(user, government, input);
+    async createTag(governmentUID, {name}) {
+        const user = await logic.demandUser(this.context.user);
+
+        const government = await logic.demand(
+            await lookup.getGovernmentObjectByUID(governmentUID),
+            "Invalid Government UID."
+        );
+
+        // Create and return a new target
+        return await Tag.create({
+            creator: user,
+            government: government,
+            name
+        });
     }
 
     /**
@@ -252,29 +266,140 @@ class PetitionAPI {
      * @param user
      * @param government
      * @param input
-     * @returns {Promise<Tag>}
+     * @returns {Promise<Document>}
      */
-    async createTarget(user, government, input) {
-        return await this.controller.createTarget(user, government, input);
+    async createTarget(governmentUID, {name}) {
+        const user = await logic.demandUser(this.context.user);
+
+        const government = await logic.demand(
+            await lookup.getGovernmentObjectByUID(governmentUID),
+            "Invalid Government UID."
+        );
+
+        // Create and return a new target
+        return await Target.create({
+            creator: user,
+            government,
+            name
+        });
     }
 
     /**
      * Creates a new Petition for the current Government.
      * @param user
      * @param input
-     * @returns {Promise<Petition>}
+     * @returns {Promise<Document>}
      */
-    async createPetition(user, input) {
-        // Preflight validation
-        if (!input.target) {
-            throw new UserInputError('You must provide a petition Target!');
+    async createPetition({target: targetUID, tags: tagUIDs, name, description}) {
+        const user = await logic.demandUser(this.context.user);
+
+        // Fetch the current government
+        const government = await lookup.getGovernmentObjectByUID(null);
+
+        // Make sure Tag UIDs are unique
+        tagUIDs = tagUIDs.reduce((list, tag) => {
+            if (!list.includes(tag)) {
+                list.push(tag);
+            }
+            return list;
+        }, []);
+
+        // Fetch the Tags by their UIDs, returning a list of UIDs.
+        const tags = await Tag.find({uid: {$in: tagUIDs}}).select('_id').lean();
+        const target = logic.demand(await lookup.getTargetByUID(targetUID), "Invalid Target provided.");
+
+        // Make sure target exists
+        if (tags.length !== tagUIDs.length) {
+            throw new UserInputError('Invalid Tags provided.');
         }
 
-        if (!input.tags) {
-            input.tags = [];
+        // Create the new Petition.
+        return await Petition.create({
+            creator: user,
+            target,
+            government,
+            name,
+            description,
+            tags
+        });
+    }
+
+    /**
+     * Attempts to sign a petition.
+     * @param user
+     * @param input
+     * @returns {Promise<Document>}
+     */
+    async signPetition(petitionUID, {referer: referralCode, comment}) {
+        const user = await logic.demandUser(this.context.user);
+
+        // Ensure that's a valid Petition
+        const petition = logic.demand(
+            await lookup.getPetitionObjectByUID(petitionUID),
+            "Invalid Petition provided."
+        );
+
+        // Attempt to discover who referred them to sign.
+        let referrer = null;
+        if (referralCode) {
+            referrer = await Signature.findOne({referralCode}).select('_id').lean();
         }
 
-        return await this.controller.createPetition(user, input);
+        // Create the Signature
+        return await Signature.create({
+            user,
+            referrer,
+            petition,
+            comment
+        });
+    }
+
+    async likeSignature(signatureUID) {
+        if (await this.userHasLiked(signatureUID)) {
+            throw new UserInputError("User has already liked that Signature!");
+        }
+
+        const user = await logic.demandUser(this.context.user);
+
+        let signature = logic.demand(
+            await Signature.findOne({uid: signatureUID}).select(['_id', 'uid', 'likes']),
+            "Invalid Signature provided."
+        );
+
+        signature.likes.push({
+            user
+        });
+
+        await Signature.updateOne({
+            _id: signature._id
+        }, {
+            likes: signature.likes
+        });
+
+        return signature;
+    }
+
+    async userHasLiked(signatureUID) {
+        const user = this.context.user;
+        if (!user) {
+            return false;
+        }
+
+        const signature = logic.demand(
+            await lookup.getSignatureObjectByUID(signatureUID),
+            "Invalid Signature provided."
+        );
+
+        const count = await Signature.countDocuments({
+            _id: signature._id,
+            likes: {
+                $elemMatch: {
+                    user
+                }
+            }
+        });
+
+        return count > 0;
     }
 
 }

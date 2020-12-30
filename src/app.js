@@ -16,15 +16,13 @@ require('./database');
 // Set up Express server
 const app = express();
 
-app.disable('x-powered-by');
-
 app.use(logger(config.PRODUCTION ? 'short' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(config.SESSION_SECRET));
 
 app.use(cors({
-    origin: '*',
+    origin: config.CORS_ORIGINS,
     credentials: true,
     methods: ['GET', 'PUT', 'POST', 'OPTIONS'],
 }));
@@ -52,7 +50,7 @@ const governmentAPI = new GovernmentAPI();
 const userAPI = new UserAPI();
 const petitionAPI = new PetitionAPI();
 
-const UserPermissions = require('./helpers/UserPermissions');
+const UserPermissions = require('./utils/UserPermissions');
 
 // Create and apply ApolloServer
 const server = new ApolloServer({
@@ -66,17 +64,19 @@ const server = new ApolloServer({
         };
     },
     context: async ({req}) => {
-        if (req.session.user) {
+        if (req.user) {
+            const user = req.user;
+
             // Instantiate user permissions fetch.
-            const permissions = new UserPermissions(req.session.user._id, req.session.user.uid);
-            await permissions.load();
+            // const permissions = new UserPermissions(user._id, user.uid);
+            // await permissions.load(userAPI, governmentAPI);
 
             return {
                 // Barebones User object, featuring the fields uid and _id only.
                 user: {
-                    _id: req.session.user._id,
-                    uid: req.session.user.uid,
-                    permissions
+                    _id: user._id,
+                    uid: user.uid,
+                    // permissions
                 }
             };
         } else {

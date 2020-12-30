@@ -52,6 +52,23 @@ const signatureSchema = new mongoose.Schema({
         default: shortid.generate,
         required: true
     },
+    // People who have liked this signature (usually liking a comment)
+    likes: {
+        required: true,
+        default: [],
+        type: [new mongoose.Schema({
+            user: {
+                type: mongoose.Types.ObjectId,
+                ref: 'User',
+                required: true
+            },
+            timestamp: {
+                type: Date,
+                default: Date.now,
+                required: true
+            }
+        })]
+    },
 
     /**
      * Metadata

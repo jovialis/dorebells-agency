@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema({
     authenticator: {
         type: mongoose.Types.ObjectId,
         ref: 'Authenticator',
-        required: true
+        // required: true // DISABLED FOR TESTING PURPOSES
     },
 
     /**

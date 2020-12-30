@@ -3,13 +3,16 @@
  **/
 
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
+const config = require('../config');
 
 const User = mongoose.model('User');
 const Authenticator = mongoose.model('Authenticator');
 const GoogleAuthenticator = mongoose.model('GoogleAuthenticator');
 
 module.exports = {
-    loginUser
+    loginGoogleUser
 };
 
 /**
@@ -38,15 +41,17 @@ async function userExistsByGoogleID(googleId) {
 }
 
 /**
- * Logins in or creates a User by their Google ID.
+ * Logins in or creates a User by their Google ID. Returns a JWT token.
  * @param googleId
  * @param profile
- * @returns {Promise<User>}
+ * @returns {Promise<String>}
  */
-async function loginUser(googleId, profile) {
+async function loginGoogleUser(googleId, profile) {
+    let user;
+
     // If the user exists, log them in. Otherwise, create a new account.
     if (await userExistsByGoogleID(googleId)) {
-        const user = await getUserByGoogleID(googleId);
+        user = await getUserByGoogleID(googleId);
 
         // Update the user's last login
         await User.updateOne({
@@ -55,10 +60,20 @@ async function loginUser(googleId, profile) {
             lastLogin: Date.now()
         });
 
-        return user;
     } else {
-        return await createGoogleUser(googleId, profile);
+        user = await createGoogleUser(googleId, profile);
     }
+
+    // Create JWT and return
+    const tokenContents = {
+        uid: user.uid,
+        _id: user._id
+    };
+
+    // Sign and return.
+    return jwt.sign(tokenContents, config.SESSION_SECRET, {
+        issuer: 'agency'
+    });
 }
 
 /**

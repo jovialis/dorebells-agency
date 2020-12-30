@@ -2,6 +2,7 @@
  * Created on 12/5/20 by jovialis (Dylan Hanson)
  **/
 
+const permissions = require('../../permissions');
 const {AuthenticationError} = require('apollo-server');
 
 const {MethodSchemaPackage} = require('../../utils/schemaPackage');
@@ -15,6 +16,12 @@ const signatures = `
     
     # Creates a new target
     createTarget(government: ID, input: CreateTargetRequest!): Target!
+    
+    # Signs a given petition
+    signPetition(petition: ID!, input: SignPetitionRequest!): Signature!
+    
+    # Likes a comment
+    likeSignature(signature: ID!): Signature!
 `;
 
 const objects = `
@@ -23,6 +30,11 @@ const objects = `
         description: String!
         target: ID!
         tags: [ID]
+    }
+    
+    input SignPetitionRequest {
+        referer: ID
+        comment: String
     }
     
     input CreateTagRequest {
@@ -35,17 +47,20 @@ const objects = `
 `;
 
 const resolvers = {
-    async createPetition(parent, {input}, {user, dataSources: { petitionAPI }}) {
-        if (!user) throw new AuthenticationError('User must be logged in.');
-        return await petitionAPI.createPetition(user, input);
+    async signPetition(parent, {petition, input}, {dataSources}) {
+        return await dataSources.petitionAPI.signPetition(petition, input);
     },
-    async createTag(parent, {government, input}, {user, dataSources: { petitionAPI }}) {
-        if (!user) throw new AuthenticationError('User must be logged in.');
-        return await petitionAPI.createTag(user, government, input);
+    async createPetition(parent, {input}, {dataSources}) {
+        return await dataSources.petitionAPI.createPetition(input);
     },
-    async createTarget(parent, {government, input}, {user, dataSources: { petitionAPI }}) {
-        if (!user) throw new AuthenticationError('User must be logged in.');
-        return await petitionAPI.createTarget(user, government, input);
+    async createTag(parent, {government, input}, {dataSources}) {
+        return await dataSources.petitionAPI.createTag(government, input);
+    },
+    async createTarget(parent, {government, input}, {dataSources}) {
+        return await dataSources.petitionAPI.createTarget(government, input);
+    },
+    async likeSignature(parent, {signature}, {dataSources}) {
+        return await dataSources.petitionAPI.likeSignature(signature)
     }
 };
 

@@ -2,15 +2,22 @@
  * Created on 12/5/20 by jovialis (Dylan Hanson)
  **/
 
-const error = require('http-errors');
+const mongoose = require('mongoose');
+const {DataSource} = require('apollo-datasource');
 
-class UserAPI {
+const User = mongoose.model('User');
+const RoleHolder = mongoose.model('RoleHolder');
+
+const lookup = require('../helpers/lookup');
+const logic = require('../utils/logic');
+
+class UserAPI extends DataSource {
 
     /**
      * Construct and store instances of the controllers we'll need.
      */
     constructor() {
-        this.controller = require('../controllers/users');
+        super();
     }
 
     /**
@@ -28,7 +35,30 @@ class UserAPI {
      * @returns {Promise<User>}
      */
     async getUser(userUID) {
-        return this.controller.getUserByUID(userUID);
+        return logic.demand(
+            await lookup.getUserByUID(userUID),
+            "Invalid User UID."
+        );
+    }
+
+    /**
+     * Returns a user by their UID.
+     * @returns {Promise<User>}
+     * @param userObjectId
+     */
+    async getUserByObjectID(userObjectId) {
+        return logic.demand(
+            await User.findById(userObjectId).lean(),
+            "Invalid User UID."
+        );
+    }
+
+    async getMe() {
+        if (!this.context.user) {
+            return null;
+        } else {
+            return await this.getUser(this.context.user.uid);
+        }
     }
 
     /**
@@ -38,8 +68,24 @@ class UserAPI {
      * @param options
      * @returns {Promise<[Role]>}
      */
-    async getRoles(userUID, governmentUID) {
-        return this.controller.getUserRolesByUIDAndGovernmentUID(userUID, governmentUID);
+    async getUserRoles(userUID, governmentUID) {
+        const user = logic.demand(
+            await lookup.getUserObjectByUID(userUID),
+            "Invalid User UID."
+        );
+
+        const government = logic.demand(
+            await lookup.getGovernmentObjectByUID(governmentUID),
+            "Invalid Government UID."
+        );
+
+        const roleHoldings = await RoleHolder
+            .find({ government, user })
+            .select('role')
+            .populate('role')
+            .lean();
+
+        return roleHoldings.map(r => r.role);
     }
 
     /**
@@ -48,43 +94,27 @@ class UserAPI {
      * @param governmentUID Optional Government UID.
      * @returns {Promise<[String]>}
      */
-    async getPermissions(userUID, governmentUID) {
-        const roles = await this.controller.getUserRolesByUIDAndGovernmentUID(userUID, governmentUID, {
-            select: 'permissions'
-        });
-        return roles.reduce((r, v) => {
+    async getUserPermissions(userUID, governmentUID) {
+        const user = logic.demand(
+            await lookup.getUserObjectByUID(userUID),
+            "Invalid User UID."
+        );
+
+        const government = logic.demand(
+            await lookup.getGovernmentObjectByUID(governmentUID),
+            "Invalid Government UID."
+        );
+
+        const roleHoldings = await RoleHolder
+            .find({ government, user })
+            .select('role')
+            .populate({path: 'role', select: 'permissions'})
+            .lean();
+
+        return roleHoldings.reduce((r, v) => {
             r.push(...v.permissions);
             return r;
         }, []);
-    }
-
-    /**
-     * Returns the Authenticator type used by the user.
-     * @param userUID UID of the user.
-     * @returns {Promise<String>}
-     */
-    async getAuthenticator(userUID) {
-        const user = await this.controller.getUserByUID(userUID, {
-            select: 'authenticator',
-            populate: [{
-                path: 'authenticator',
-                select: 'authenticatorType'
-            }]
-        });
-        return user.authenticator.authenticatorType;
-    }
-
-    /**
-     * Returns the Government for a given role
-     * @param roleUID UID of the role.
-     * @returns {Promise<Government>}
-     */
-    async getRoleGovernment(roleUID) {
-        const role = await this.controller.getRoleByUID(roleUID, {
-            select: 'government',
-            populate: 'government'
-        });
-        return role.government;
     }
 
 }
