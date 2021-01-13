@@ -15,6 +15,7 @@ const signatures = `
 const objects = `
     input CreateRoleRequest {
         name: String!
+        color: String!
     }
 `;
 

@@ -151,7 +151,7 @@ class PetitionAPI extends DataSource {
             "Invalid Government UID."
         );
 
-        return await this.lookup.findReferencingPetitions('government', government);
+        return await petitions.getTopPetitions(government);
     }
 
     async getPetitionsByTarget(targetUID) {

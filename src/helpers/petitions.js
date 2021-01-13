@@ -11,9 +11,61 @@ const logic = require('../utils/logic');
 
 module.exports = {
     getRecentPetitions,
+    getTopPetitions,
     getTrendingPetitions,
     getRelatedPetitions
 };
+
+// Returns the top petitions for a given government
+async function getTopPetitions(government, limit = 20) {
+    // Make sure the government exists
+    government = logic.demand(government, 'Government is required.');
+
+    // Find the best petitions
+    return Petition
+        .aggregate([
+            // Find petitions in this government
+            {
+                $match: {
+                    government: mongoose.Types.ObjectId(government._id)
+                }
+            },
+            // For each petition, find a list of its signatures.
+            {
+                $lookup: {
+                    from: 'signatures',
+                    localField: '_id',
+                    foreignField: 'petition',
+                    as: 'signatures'
+                }
+            },
+            // Add a field for the number of signatures
+            {
+                $addFields: {
+                    signatureCount: {
+                        $size: '$signatures'
+                    }
+                }
+            },
+            // Add a field for the number of signatures
+            {
+                $sort: {
+                    signatureCount: -1
+                }
+            },
+            // Limit to a number
+            {
+                $limit: limit
+            },
+            // Remove the signatureCount
+            {
+                $project: {
+                    signatureCount: 0,
+                    signatures: 0
+                }
+            }
+        ]);
+}
 
 // Returns the most recent petitions.
 async function getRecentPetitions() {

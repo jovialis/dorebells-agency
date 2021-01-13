@@ -16,6 +16,7 @@ const RoleHolder = mongoose.model('RoleHolder');
 
 const logic = require('../utils/logic');
 const lookup = require('../helpers/lookup');
+const petitions = require('../helpers/petitions');
 
 class GovernmentAPI extends DataSource {
 
@@ -102,7 +103,7 @@ class GovernmentAPI extends DataSource {
             "Invalid Government UID."
         );
 
-        return Petition.find({ government });
+        return await petitions.getTopPetitions(government);
     }
 
     /**
@@ -210,7 +211,7 @@ class GovernmentAPI extends DataSource {
         return await lookup.findReferencingRoles('government', government);
     }
 
-    async createGovernmentRole(governmentUID, {name}) {
+    async createGovernmentRole(governmentUID, {name, color}) {
         const user = logic.demandUser(this.context.user);
 
         const government = logic.demand(
@@ -221,6 +222,7 @@ class GovernmentAPI extends DataSource {
         return await Role.create({
             creator: user,
             government,
+            color,
             name
         });
     }
