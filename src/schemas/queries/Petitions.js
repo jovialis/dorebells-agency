@@ -8,6 +8,9 @@ const signatures = `
     # Lists the top 20 trending petitions.
     trendingPetitions: [Petition]!
 
+    # Lists all-time top petitions
+    topPetitions(government: ID): [Petition]!
+
     # Lists petitions
     petitions(government: ID): [Petition]!
 
@@ -29,6 +32,9 @@ const resolvers = {
     },
     async petition(parent, {id}, {dataSources}) {
         return await dataSources.petitionAPI.getPetition(id);
+    },
+    async topPetitions(parent, {government}, {dataSources}) {
+        return await dataSources.petitionAPI.getTopPetitionsByGovernment(government);
     },
     async petitions(parent, {government}, {dataSources}) {
         return await dataSources.petitionAPI.getPetitionsByGovernment(government);

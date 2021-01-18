@@ -142,16 +142,25 @@ class PetitionAPI extends DataSource {
             "Invalid Tag UID."
         );
 
-        return await this.lookup.findReferencingPetitions('tag', tag);
+        return await lookup.findReferencingPetitions('tag', tag);
     }
 
-    async getPetitionsByGovernment(governmentUID) {
+    async getTopPetitionsByGovernment(governmentUID) {
         const government = await logic.demand(
-            await lookup.getTagObjectByUID(governmentUID),
+            await lookup.getGovernmentObjectByUID(governmentUID),
             "Invalid Government UID."
         );
 
         return await petitions.getTopPetitions(government);
+    }
+
+    async getPetitionsByGovernment(governmentUID) {
+        const government = await logic.demand(
+            await lookup.getGovernmentObjectByUID(governmentUID),
+            "Invalid Government UID."
+        );
+
+        return await lookup.findReferencingPetitions('government', government);
     }
 
     async getPetitionsByTarget(targetUID) {
@@ -160,7 +169,7 @@ class PetitionAPI extends DataSource {
             "Invalid Target UID."
         );
 
-        return await this.lookup.findReferencingPetitions('target', target);
+        return await lookup.findReferencingPetitions('target', target);
     }
 
     /**
