@@ -56,7 +56,7 @@ module.exports = class UserPermissions {
 
         // Search for a permission that satisfies the requirement
         for (const permission of allPermissions) {
-            if (UserPermissions.#permissionIsAdequate(permission, requiredPermission)) {
+            if (UserPermissions.__permissionIsAdequate(permission, requiredPermission)) {
                 return true;
             }
         }
@@ -64,7 +64,7 @@ module.exports = class UserPermissions {
         return false;
     }
 
-    static #permissionIsAdequate(userPermission, requiredPermission) {
+    static __permissionIsAdequate(userPermission, requiredPermission) {
         // We compare by getting each segment, separated by periods.
         const splitUserPermission = userPermission.split('.');
         const splitRequiredPermission = requiredPermission.split('.');
